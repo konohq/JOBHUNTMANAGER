@@ -10,4 +10,7 @@ class Company < ApplicationRecord
             format: { with: URL_FORMAT },
             length: { maximum: 2_048 },
             allow_blank: true
+  validates :industry, length: { maximum: 255 }, allow_blank: true
+  validates :location, length: { maximum: 255 }, allow_blank: true
+  validates :description, length: { maximum: 10_000 }, allow_blank: true
 end

@@ -35,19 +35,6 @@ module Api
         def destroy
           head :no_content
         end
-
-        private
-
-        def authenticate_user_with_json!
-          return if current_user
-
-          render json: {
-            error: {
-              code: "unauthorized",
-              message: "認証が必要です"
-            }
-          }, status: :unauthorized
-        end
       end
     end
   end

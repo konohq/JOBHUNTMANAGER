@@ -14,5 +14,11 @@ Rails.application.routes.draw do
     get "api/v1/auth/me", to: "api/v1/auth/sessions#show"
   end
 
+  namespace :api do
+    namespace :v1 do
+      resources :companies, only: %i[index create]
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

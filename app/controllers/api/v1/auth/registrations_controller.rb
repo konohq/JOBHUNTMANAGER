@@ -15,14 +15,7 @@ module Api
             }, status: :created
           else
             clean_up_passwords(resource)
-
-            render json: {
-              error: {
-                code: "validation_error",
-                message: "入力内容を確認してください",
-                details: resource.errors.to_hash(true)
-              }
-            }, status: :unprocessable_entity
+            render_validation_errors(resource)
           end
         end
 
