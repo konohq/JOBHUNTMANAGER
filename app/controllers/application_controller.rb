@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::API
   rescue_from ActionController::ParameterMissing,
               with: :render_bad_request
+  rescue_from ActiveRecord::RecordNotFound,
+              with: :render_not_found
 
   protected
 
@@ -32,5 +34,23 @@ class ApplicationController < ActionController::API
         message: "リクエスト形式が正しくありません"
       }
     }, status: :bad_request
+  end
+
+  def render_not_found
+    render json: {
+      error: {
+        code: "not_found",
+        message: "対象のデータが見つかりません"
+      }
+    }, status: :not_found
+  end
+
+  def render_dependent_exists(message)
+    render json: {
+      error: {
+        code: "dependent_exists",
+        message: message
+      }
+    }, status: :unprocessable_entity
   end
 end

@@ -7,10 +7,15 @@ class JobPosting < ApplicationRecord
   has_one :application, dependent: :restrict_with_error
 
   validates :title, presence: true, length: { maximum: 255 }
+  validates :employment_type,
+            length: { maximum: 255 },
+            allow_blank: true
+  validates :location, length: { maximum: 255 }, allow_blank: true
   validates :source_url,
             format: { with: URL_FORMAT },
             length: { maximum: 2_048 },
             allow_blank: true
+  validates :description, length: { maximum: 10_000 }, allow_blank: true
   validate :company_must_belong_to_user
 
   private
