@@ -240,13 +240,15 @@ high
 
 | HTTP | エンドポイント | 認証 | 用途 |
 | --- | --- | --- | --- |
-| GET | `/api/v1/applications` | 必要 | 応募一覧・カンバン取得 |
+| GET | `/api/v1/applications` | 必要 | 応募一覧 |
 | POST | `/api/v1/applications` | 必要 | 応募登録 |
 | GET | `/api/v1/applications/:id` | 必要 | 応募詳細 |
-| PATCH | `/api/v1/applications/:id` | 必要 | 応募更新・ステータス変更 |
+| PATCH | `/api/v1/applications/:id` | 必要 | 応募日の更新 |
 | DELETE | `/api/v1/applications/:id` | 必要 | 応募削除 |
+| GET | `/api/v1/kanban` | 必要 | カンバン取得 |
+| PATCH | `/api/v1/applications/:application_id/status` | 必要 | カンバンのステータス変更 |
 
-並び替えAPIは作成しない。各列は `updated_at DESC` で返す。
+同一列内の手動並び替えAPIはMVPでは作成しない。
 
 ### 3.5 面接
 
@@ -668,9 +670,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-Rails側では `status` ごとに `updated_at DESC` で返す。Reactは結果をステータス別にグループ化する。
-
-カンバンカードへ `next_interview` と `next_task` は含めない。
+MVPでは検索とページネーションを行わない。
 
 ### 7.2 応募登録
 
@@ -752,10 +752,98 @@ Authorization: Bearer <JWT>
 
 応募詳細画面に必要な関連情報をまとめて返す。各子リソースの単独詳細APIは作成しない。
 
-### 7.4 応募更新・ステータス変更
+### 7.4 応募更新
+
+通常の応募更新APIでは `applied_on` のみ変更できる。カンバンのステータス変更には、後述の専用APIを使用する。
 
 ```http
 PATCH /api/v1/applications/20
+Authorization: Bearer <JWT>
+```
+
+リクエスト:
+
+```json
+{
+  "application": {
+    "applied_on": "2026-06-20"
+  }
+}
+```
+
+成功: `200 OK`
+
+```json
+{
+  "data": {
+    "id": 20,
+    "status": "applied",
+    "applied_on": "2026-06-20",
+    "updated_at": "2026-06-19T07:00:00Z"
+  }
+}
+```
+
+- 更新時に許可するパラメータは `applied_on` のみとする
+- `status` はこのAPIでは変更せず、`PATCH /api/v1/applications/:application_id/status`を使用する
+
+### 7.5 応募削除
+
+```http
+DELETE /api/v1/applications/20
+Authorization: Bearer <JWT>
+```
+
+成功: `204 No Content`
+
+面接、タスク、メモも連鎖削除される。React側で確認ダイアログを表示してから実行する。
+
+### 7.6 カンバン取得
+
+```http
+GET /api/v1/kanban
+Authorization: Bearer <JWT>
+```
+
+成功: `200 OK`
+
+```json
+{
+  "data": {
+    "applied": [
+      {
+        "id": 20,
+        "status": "applied",
+        "applied_on": "2026-06-19",
+        "company": {
+          "id": 1,
+          "name": "株式会社サンプル"
+        },
+        "job_posting": {
+          "id": 10,
+          "title": "バックエンドエンジニア"
+        },
+        "updated_at": "2026-06-19T06:20:00Z"
+      }
+    ],
+    "document_screening": [],
+    "interview_scheduled": [],
+    "offered": [],
+    "rejected": []
+  }
+}
+```
+
+- `applied`、`document_screening`、`interview_scheduled`、`offered`、`rejected`の5列を必ず返す
+- 応募が存在しない列は空配列を返す
+- 各列は `updated_at DESC`、同時刻の場合は `id DESC` で返す
+- カンバンカードには会社、求人、応募日、ステータスを含める
+- `next_interview`と`next_task`はMVPでは含めない
+
+### 7.7 カンバンのステータス変更
+
+```http
+PATCH /api/v1/applications/20/status
 Authorization: Bearer <JWT>
 ```
 
@@ -777,23 +865,23 @@ Authorization: Bearer <JWT>
     "id": 20,
     "status": "document_screening",
     "applied_on": "2026-06-19",
+    "company": {
+      "id": 1,
+      "name": "株式会社サンプル"
+    },
+    "job_posting": {
+      "id": 10,
+      "title": "バックエンドエンジニア"
+    },
     "updated_at": "2026-06-19T07:00:00Z"
   }
 }
 ```
 
-ステータス更新によって `updated_at` が更新されるため、移動先の列の先頭へ表示される。
-
-### 7.5 応募削除
-
-```http
-DELETE /api/v1/applications/20
-Authorization: Bearer <JWT>
-```
-
-成功: `204 No Content`
-
-面接、タスク、メモも連鎖削除される。React側で確認ダイアログを表示してから実行する。
+- 更新時に許可するパラメータは `status` のみとする
+- `applied_on`や`job_posting_id`など、その他の値は変更しない
+- ステータス変更で `updated_at`が更新され、移動先の列の先頭へ表示される
+- 同一列内の手動並び替えと表示順保存はMVPでは実装しない
 
 ---
 
@@ -1047,6 +1135,8 @@ Authorization: Bearer <JWT>
 
 ## 10. メモAPI
 
+APIではメモ本文を `content` として扱い、DBの `notes.body` へ保存する。
+
 ### 10.1 応募別メモ一覧
 
 ```http
@@ -1062,7 +1152,7 @@ Authorization: Bearer <JWT>
     {
       "id": 50,
       "application_id": 20,
-      "body": "企業研究: 自社プロダクトの成長に注力している。",
+      "content": "企業研究: 自社プロダクトの成長に注力している。",
       "created_at": "2026-06-19T06:50:00Z",
       "updated_at": "2026-06-19T06:50:00Z"
     }
@@ -1084,7 +1174,7 @@ Authorization: Bearer <JWT>
 ```json
 {
   "note": {
-    "body": "企業研究: 自社プロダクトの成長に注力している。"
+    "content": "企業研究: 自社プロダクトの成長に注力している。"
   }
 }
 ```
@@ -1096,7 +1186,7 @@ Authorization: Bearer <JWT>
   "data": {
     "id": 50,
     "application_id": 20,
-    "body": "企業研究: 自社プロダクトの成長に注力している。",
+    "content": "企業研究: 自社プロダクトの成長に注力している。",
     "created_at": "2026-06-19T06:50:00Z",
     "updated_at": "2026-06-19T06:50:00Z"
   }
@@ -1115,7 +1205,7 @@ Authorization: Bearer <JWT>
 ```json
 {
   "note": {
-    "body": "企業研究を更新。技術ブログも確認する。"
+    "content": "企業研究を更新。技術ブログも確認する。"
   }
 }
 ```
@@ -1264,6 +1354,10 @@ Rails.application.routes.draw do
       resources :interviews, only: %i[index update destroy]
       resources :tasks, only: %i[index update destroy]
       resources :notes, only: %i[update destroy]
+      resource :kanban, only: :show, controller: "kanban"
+      patch "applications/:application_id/status",
+            to: "application_statuses#update",
+            as: :application_status
     end
   end
 end
