@@ -221,10 +221,10 @@ high
 
 | HTTP | エンドポイント | 認証 | 用途 |
 | --- | --- | --- | --- |
-| GET | `/api/v1/companies` | 必要 | 求人フォーム用企業一覧 |
-| POST | `/api/v1/companies` | 必要 | 求人フォーム内の企業登録 |
+| GET | `/api/v1/companies` | 必要 | 企業一覧 |
+| POST | `/api/v1/companies` | 必要 | 企業登録 |
 
-企業詳細、更新、削除APIはMVPでは作成しない。
+企業詳細、更新、削除APIはMVPでは作成しない。企業APIは既存機能として維持するが、MVP画面の簡易応募登録では直接呼び出さない。
 
 ### 3.3 求人
 
@@ -236,6 +236,8 @@ high
 | PATCH | `/api/v1/job_postings/:id` | 必要 | 求人更新 |
 | DELETE | `/api/v1/job_postings/:id` | 必要 | 求人削除 |
 
+求人APIは既存機能として維持するが、MVP画面の簡易応募登録では直接呼び出さない。
+
 ### 3.4 応募・カンバン
 
 | HTTP | エンドポイント | 認証 | 用途 |
@@ -246,6 +248,7 @@ high
 | PATCH | `/api/v1/applications/:id` | 必要 | 応募日の更新 |
 | DELETE | `/api/v1/applications/:id` | 必要 | 応募削除 |
 | GET | `/api/v1/kanban` | 必要 | カンバン取得 |
+| POST | `/api/v1/kanban/applications` | 必要 | 会社名と応募期限による簡易応募登録 |
 | PATCH | `/api/v1/applications/:application_id/status` | 必要 | カンバンのステータス変更 |
 
 同一列内の手動並び替えAPIはMVPでは作成しない。
@@ -428,7 +431,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-求人フォームの選択肢に必要な `id` と `name` のみ返す。
+既存の求人APIや将来の求人管理画面で利用するため、一覧では `id` と `name` を返す。MVPの簡易応募登録画面ではこのAPIを直接呼ばない。
 
 ### 5.2 企業登録
 
@@ -468,7 +471,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-Reactは作成された `id` を求人フォームの `company_id` に設定する。
+作成された `id` は既存の求人登録APIの `company_id` に使用できる。MVPの簡易応募登録ではRails側が企業を再利用または作成するため、このAPIを個別に呼ばない。
 
 ---
 
@@ -713,7 +716,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-重複応募は `422 Unprocessable Entity` とする。
+同一 `job_posting_id` の重複応募は `422 Unprocessable Entity` とする。MVP画面では後述の簡易応募登録APIを使用する。
 
 ### 7.3 応募詳細
 
@@ -736,6 +739,7 @@ Authorization: Bearer <JWT>
       "employment_type": "正社員",
       "location": "東京都",
       "source_url": "https://example.com/jobs/10",
+      "application_deadline": "2026-07-31",
       "company": {
         "id": 1,
         "name": "株式会社サンプル"
@@ -798,7 +802,75 @@ Authorization: Bearer <JWT>
 
 面接、タスク、メモも連鎖削除される。React側で確認ダイアログを表示してから実行する。
 
-### 7.6 カンバン取得
+### 7.6 カンバン簡易応募登録
+
+```http
+POST /api/v1/kanban/applications
+Authorization: Bearer <JWT>
+```
+
+リクエスト:
+
+```json
+{
+  "application": {
+    "company_name": "  株式会社サンプル  ",
+    "application_deadline": "2026-07-31"
+  }
+}
+```
+
+成功: `201 Created`
+
+```json
+{
+  "data": {
+    "id": 20,
+    "status": "applied",
+    "applied_on": "2026-06-22",
+    "company": {
+      "id": 1,
+      "name": "株式会社サンプル"
+    },
+    "job_posting": {
+      "id": 10,
+      "title": "株式会社サンプル",
+      "application_deadline": "2026-07-31"
+    },
+    "updated_at": "2026-06-22T06:20:00Z"
+  }
+}
+```
+
+- 認証済みの `current_user` のデータとして作成する
+- `company_name` は前後空白を除去し、必須・最大255文字とする
+- `application_deadline` は任意で、指定時は `YYYY-MM-DD` 形式とする
+- 同じユーザー内に同名Companyが存在する場合は再利用する
+- 同じユーザー内に同一会社名のApplicationが存在する場合は作成せず、`company_name` のバリデーションエラーとして `422 Unprocessable Entity` を返す
+- Company、JobPosting、Applicationは `ApplicationRecord.transaction` 内で作成する
+- 同一ユーザーの同時リクエストはユーザー行をロックして直列化する
+- JobPostingは内部データとして、`title` に会社名、`application_deadline` に入力値を保存する
+- Applicationは `status: applied`、`applied_on: Date.current` で作成する
+- 途中で失敗した場合はトランザクションをロールバックし、CompanyやJobPostingだけを残さない
+- ReactはこのAPIだけを呼び、企業API・求人API・通常の応募登録APIを個別に呼ばない
+
+重複時の例:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "入力内容を確認してください",
+    "details": {
+      "company_name": [
+        "Company nameにはすでに応募が登録されています"
+      ]
+    }
+  }
+}
+```
+
+### 7.7 カンバン取得
 
 ```http
 GET /api/v1/kanban
@@ -821,7 +893,8 @@ Authorization: Bearer <JWT>
         },
         "job_posting": {
           "id": 10,
-          "title": "バックエンドエンジニア"
+          "title": "株式会社サンプル",
+          "application_deadline": "2026-07-31"
         },
         "updated_at": "2026-06-19T06:20:00Z"
       }
@@ -837,10 +910,11 @@ Authorization: Bearer <JWT>
 - `applied`、`document_screening`、`interview_scheduled`、`offered`、`rejected`の5列を必ず返す
 - 応募が存在しない列は空配列を返す
 - 各列は `updated_at DESC`、同時刻の場合は `id DESC` で返す
-- カンバンカードには会社、求人、応募日、ステータスを含める
+- カンバンカードには会社、内部求人、応募日、応募期限、ステータスを含める
+- MVP画面では会社名、応募期限、ステータスを表示する
 - `next_interview`と`next_task`はMVPでは含めない
 
-### 7.7 カンバンのステータス変更
+### 7.8 カンバンのステータス変更
 
 ```http
 PATCH /api/v1/applications/20/status
@@ -871,7 +945,8 @@ Authorization: Bearer <JWT>
     },
     "job_posting": {
       "id": 10,
-      "title": "バックエンドエンジニア"
+      "title": "株式会社サンプル",
+      "application_deadline": "2026-07-31"
     },
     "updated_at": "2026-06-19T07:00:00Z"
   }
@@ -1293,6 +1368,7 @@ TaskとNoteも同じ方式とする。各コントローラーで `before_action
 - 企業API
 - 求人API
 - 応募API
+- カンバン取得・簡易応募登録・ステータス変更API
 - 面接API
 - タスクAPI
 - メモAPI
@@ -1355,6 +1431,9 @@ Rails.application.routes.draw do
       resources :tasks, only: %i[index update destroy]
       resources :notes, only: %i[update destroy]
       resource :kanban, only: :show, controller: "kanban"
+      post "kanban/applications",
+           to: "kanban_applications#create",
+           as: :kanban_applications
       patch "applications/:application_id/status",
             to: "application_statuses#update",
             as: :application_status
@@ -1372,6 +1451,9 @@ end
 - アプリ初期化時に `/auth/me` を呼ぶ
 - `401` を受けた場合はJWTを削除してログイン画面へ遷移する
 - カンバン移動は楽観的更新を行い、失敗時に元の列へ戻す
+- カンバンの＋ボタンは `POST /api/v1/kanban/applications` のみを呼ぶ
+- 簡易応募登録成功時はレスポンスのカードを「応募済み」列へ追加する
+- 簡易応募登録失敗時は `company_name` と `application_deadline` のエラーを対応する入力欄へ表示する
 - 応募削除前に面接、タスク、メモも削除されることを表示する
 - 求人削除が `dependent_exists` で失敗した場合は応募削除が必要であることを表示する
 - enumはTypeScriptのunion型で定義する

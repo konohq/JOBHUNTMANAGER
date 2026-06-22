@@ -11,7 +11,7 @@ import {
 } from '../shared/api/apiError'
 import { ContentLoading } from '../shared/components/ContentLoading'
 import { InlineAlert } from '../shared/components/InlineAlert'
-import { formatDateTime } from '../shared/utils/date'
+import { formatDate, formatDateTime } from '../shared/utils/date'
 
 export function ApplicationDetailPage() {
   const { id } = useParams()
@@ -110,7 +110,7 @@ export function ApplicationDetailPage() {
 
     try {
       await applicationsApi.destroy(id)
-      navigate(`/jobs/${application.job_posting.id}`, { replace: true })
+      navigate('/kanban', { replace: true })
     } catch (error) {
       setDeleteError(getApiErrorMessage(error))
       setShowDeleteConfirm(false)
@@ -122,10 +122,10 @@ export function ApplicationDetailPage() {
   return (
     <section>
       <Link
-        to={application ? `/jobs/${application.job_posting.id}` : '/jobs'}
+        to="/kanban"
         className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
       >
-        ← 求人詳細へ戻る
+        ← カンバンへ戻る
       </Link>
 
       <div className="mt-8">
@@ -151,10 +151,10 @@ export function ApplicationDetailPage() {
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
               <div>
                 <p className="text-sm font-semibold text-indigo-600">
-                  {application.job_posting.company.name}
+                  応募情報
                 </p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-                  {application.job_posting.title}
+                  {application.job_posting.company.name}
                 </h1>
                 <span className="mt-4 inline-flex rounded-full bg-indigo-50 px-3 py-1 text-sm font-semibold text-indigo-700">
                   {applicationStatusLabels[application.status]}
@@ -273,16 +273,10 @@ export function ApplicationDetailPage() {
                       value={application.job_posting.company.name}
                     />
                     <DetailItem
-                      label="求人"
-                      value={application.job_posting.title}
-                    />
-                    <DetailItem
-                      label="雇用形態"
-                      value={application.job_posting.employment_type || '未設定'}
-                    />
-                    <DetailItem
-                      label="勤務地"
-                      value={application.job_posting.location || '未設定'}
+                      label="応募期限"
+                      value={formatDate(
+                        application.job_posting.application_deadline,
+                      )}
                     />
                   </dl>
                   {application.job_posting.source_url && (

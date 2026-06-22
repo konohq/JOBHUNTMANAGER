@@ -42,7 +42,8 @@ class ApplicationSerializer
     summarized_job_posting.merge(
       employment_type: job_posting.employment_type,
       location: job_posting.location,
-      source_url: job_posting.source_url
+      source_url: job_posting.source_url,
+      application_deadline: job_posting.application_deadline
     )
   end
 

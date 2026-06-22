@@ -44,19 +44,6 @@ export function AppLayout() {
               >
                 カンバン
               </NavLink>
-              <NavLink
-                to="/jobs"
-                className={({ isActive }) =>
-                  [
-                    'rounded-lg px-3 py-2 text-sm font-medium transition',
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
-                  ].join(' ')
-                }
-              >
-                求人
-              </NavLink>
             </nav>
           </div>
 

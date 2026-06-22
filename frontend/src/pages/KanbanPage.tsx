@@ -32,6 +32,7 @@ export function KanbanPage() {
     () => new Set<number>(),
   )
   const [cardErrors, setCardErrors] = useState<Record<number, string>>({})
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -127,6 +128,14 @@ export function KanbanPage() {
     }
   }
 
+  const handleCardCreated = (card: KanbanCardData) => {
+    setData((current) => ({
+      ...current,
+      applied: sortCards([card, ...current.applied]),
+    }))
+    setIsQuickAddOpen(false)
+  }
+
   return (
     <section>
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
@@ -177,6 +186,10 @@ export function KanbanPage() {
             data={data}
             updatingApplicationIds={updatingApplicationIds}
             cardErrors={cardErrors}
+            isQuickAddOpen={isQuickAddOpen}
+            onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+            onCloseQuickAdd={() => setIsQuickAddOpen(false)}
+            onCardCreated={handleCardCreated}
             onStatusChange={handleStatusChange}
           />
         )}

@@ -92,6 +92,9 @@ class ApplicationsTest < ActionDispatch::IntegrationTest
 
   test "show returns application details with related resources" do
     application = create_application(users(:one))
+    application.job_posting.update!(
+      application_deadline: Date.new(2026, 7, 31)
+    )
     interview = application.interviews.create!(
       interview_type: :first,
       scheduled_at: 1.week.from_now,
@@ -113,6 +116,8 @@ class ApplicationsTest < ActionDispatch::IntegrationTest
     assert_equal application.id, data.fetch("id")
     assert_equal application.job_posting.source_url,
                  data.dig("job_posting", "source_url")
+    assert_equal "2026-07-31",
+                 data.dig("job_posting", "application_deadline")
     assert_equal [ interview.id ], data.fetch("interviews").pluck("id")
     assert_equal [ task.id ], data.fetch("tasks").pluck("id")
     assert_equal [ note.id ], data.fetch("notes").pluck("id")
@@ -260,8 +265,9 @@ class ApplicationsTest < ActionDispatch::IntegrationTest
     assert_predicate details["applied_on"], :present?
   end
 
-  test "update changes status and applied date" do
+  test "update changes only applied date" do
     application = create_application(users(:one))
+    original_status = application.status
 
     patch "/api/v1/applications/#{application.id}",
           params: {
@@ -276,15 +282,16 @@ class ApplicationsTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     application.reload
-    assert_equal "offered", application.status
+    assert_equal original_status, application.status
     assert_equal Date.new(2026, 6, 1), application.applied_on
-    assert_equal "offered", response.parsed_body.dig("data", "status")
+    assert_equal original_status, response.parsed_body.dig("data", "status")
   end
 
-  test "update does not allow job posting to be changed" do
+  test "update does not allow job posting or status to be changed" do
     application = create_application(users(:one))
     other_job_posting = create_job_posting(users(:two))
     original_job_posting = application.job_posting
+    original_status = application.status
 
     patch "/api/v1/applications/#{application.id}",
           params: {
@@ -298,7 +305,7 @@ class ApplicationsTest < ActionDispatch::IntegrationTest
 
     assert_response :ok
     assert_equal original_job_posting, application.reload.job_posting
-    assert_equal "offered", application.status
+    assert_equal original_status, application.status
   end
 
   test "update and destroy return not found for another user application" do

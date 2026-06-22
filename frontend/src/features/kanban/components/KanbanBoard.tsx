@@ -10,6 +10,10 @@ type KanbanBoardProps = {
   data: KanbanData
   updatingApplicationIds: Set<number>
   cardErrors: Record<number, string>
+  isQuickAddOpen: boolean
+  onOpenQuickAdd: () => void
+  onCloseQuickAdd: () => void
+  onCardCreated: (card: KanbanCardData) => void
   onStatusChange: (
     card: KanbanCardData,
     status: ApplicationStatus,
@@ -20,6 +24,10 @@ export function KanbanBoard({
   data,
   updatingApplicationIds,
   cardErrors,
+  isQuickAddOpen,
+  onOpenQuickAdd,
+  onCloseQuickAdd,
+  onCardCreated,
   onStatusChange,
 }: KanbanBoardProps) {
   return (
@@ -32,6 +40,10 @@ export function KanbanBoard({
             cards={data[status]}
             updatingApplicationIds={updatingApplicationIds}
             cardErrors={cardErrors}
+            isQuickAddOpen={isQuickAddOpen}
+            onOpenQuickAdd={onOpenQuickAdd}
+            onCloseQuickAdd={onCloseQuickAdd}
+            onCardCreated={onCardCreated}
             onStatusChange={onStatusChange}
           />
         ))}

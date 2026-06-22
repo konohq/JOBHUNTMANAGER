@@ -30,16 +30,16 @@ export function KanbanCard({
         className="block rounded-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
       >
         <p className="truncate text-xs font-semibold tracking-wide text-indigo-600">
-          {card.company.name}
+          会社
         </p>
         <h3 className="mt-2 line-clamp-2 min-h-12 text-base leading-6 font-bold text-slate-900">
-          {card.job_posting.title}
+          {card.company.name}
         </h3>
 
         <div className="mt-4 flex items-center justify-between gap-3 text-xs">
-          <span className="text-slate-500">応募日</span>
+          <span className="text-slate-500">応募期限</span>
           <span className="font-medium text-slate-700">
-            {formatDate(card.applied_on)}
+            {formatDate(card.job_posting.application_deadline)}
           </span>
         </div>
       </Link>

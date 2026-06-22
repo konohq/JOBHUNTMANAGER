@@ -14,7 +14,8 @@ class KanbanCardSerializer
       },
       job_posting: {
         id: job_posting.id,
-        title: job_posting.title
+        title: job_posting.title,
+        application_deadline: job_posting.application_deadline
       },
       updated_at: application.updated_at
     }

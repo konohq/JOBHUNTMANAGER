@@ -157,7 +157,9 @@ Deviseで作成済みのテーブルへ `jti` を追加する。
 | created_at | datetime | NO | － | － | 作成日時 |
 | updated_at | datetime | NO | － | － | 更新日時 |
 
-同名企業の登録を許可するため、`[user_id, name]` はユニークにしない。
+既存の企業APIとの互換性を保つため、`[user_id, name]` はDBユニーク制約にしない。
+
+カンバンの簡易応募登録では入力された会社名の前後空白を除去し、同じユーザー内に同名企業があれば最初のCompanyを再利用する。簡易応募登録経由では同一会社名への重複応募を許可しない。
 
 ### 3.3 job_postings
 
@@ -208,6 +210,7 @@ Deviseで作成済みのテーブルへ `jti` を追加する。
 
 - `job_posting_id` をユニークにし、1求人につき応募は最大1件とする
 - `application.user_id` と `job_posting.user_id` は一致させる
+- 簡易応募登録では同じユーザーの同一会社名への応募を最大1件とする
 - カンバンは `[user_id, status, updated_at]` で取得する
 - `position` カラムは作成しない
 - 選考結果などの自由記述は `notes` に保存する
@@ -435,6 +438,27 @@ Interview
 
 実装時は重複を避けるため、子リソース取得用のprivateメソッドまたはQuery Objectへ共通化する。
 
+### 7.1 カンバン簡易応募登録の整合性
+
+簡易応募登録は新しいテーブルやカラムを追加せず、既存のCompany、JobPosting、Applicationを使用する。
+
+```ruby
+ApplicationRecord.transaction do
+  current_user.lock!
+
+  # 同一会社名への既存応募を確認
+  # Companyを再利用または作成
+  # 内部用JobPostingを作成
+  # Applicationを作成
+end
+```
+
+- `current_user` の行ロックにより、同一ユーザーの簡易応募登録を直列化する
+- Company、JobPosting、Applicationのいずれかで作成に失敗した場合はすべてロールバックする
+- 同一会社名への応募制約は簡易応募登録サービスで検証する
+- 通常の求人APIを利用した応募では、既存の `applications.job_posting_id` ユニーク制約を使用する
+- 簡易応募登録のJobPostingは内部レコードとして `title` に会社名を保存する
+
 ---
 
 ## 8. migration作成コマンド
@@ -615,6 +639,7 @@ bin\rails db:schema:dump
 
 - `name`: 必須、最大255文字
 - `website_url`: URL形式、最大2048文字
+- 簡易応募登録時は `name` の前後空白を除去する
 
 ### JobPosting
 
@@ -627,6 +652,7 @@ bin\rails db:schema:dump
 - `applied_on`: 必須
 - `job_posting_id`: ユーザー内で一意
 - 所有ユーザーと求人の所有ユーザーが一致する
+- 簡易応募登録では同じユーザーの同一会社名への既存応募がないこと
 
 ### Interview
 

@@ -4,6 +4,7 @@ import type { ApplicationStatus } from '../../applications/types'
 import {
   emptyKanbanData,
   kanbanStatuses,
+  type CreateKanbanApplicationInput,
   type KanbanCardData,
   type KanbanData,
 } from '../types'
@@ -20,6 +21,16 @@ export const kanbanApi = {
     })
 
     return data
+  },
+
+  async createApplication(
+    input: CreateKanbanApplicationInput,
+  ): Promise<KanbanCardData> {
+    const response = await apiClient.post<ApiResponse<KanbanCardData>>(
+      '/api/v1/kanban/applications',
+      { application: input },
+    )
+    return response.data.data
   },
 
   async updateStatus(

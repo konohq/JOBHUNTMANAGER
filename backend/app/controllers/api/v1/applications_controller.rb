@@ -84,7 +84,6 @@ module Api
 
       def update_application_params
         params.require(:application).permit(
-          :status,
           :applied_on
         )
       end

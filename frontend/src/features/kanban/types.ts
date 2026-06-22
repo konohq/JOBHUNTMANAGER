@@ -25,11 +25,17 @@ export type KanbanCardData = {
   job_posting: {
     id: number
     title: string
+    application_deadline: string | null
   }
   updated_at: string
 }
 
 export type KanbanData = Record<ApplicationStatus, KanbanCardData[]>
+
+export type CreateKanbanApplicationInput = {
+  company_name: string
+  application_deadline: string
+}
 
 export const emptyKanbanData = (): KanbanData => ({
   applied: [],

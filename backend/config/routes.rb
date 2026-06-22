@@ -27,6 +27,9 @@ Rails.application.routes.draw do
       resources :tasks, only: %i[index update destroy]
       resources :notes, only: %i[update destroy]
       resource :kanban, only: :show, controller: "kanban"
+      post "kanban/applications",
+           to: "kanban_applications#create",
+           as: :kanban_applications
       patch "applications/:application_id/status",
             to: "application_statuses#update",
             as: :application_status

@@ -62,6 +62,7 @@ export type ApplicationDetail = Omit<ApplicationSummary, 'job_posting'> & {
     employment_type: string | null
     location: string | null
     source_url: string | null
+    application_deadline: string | null
   }
   interviews: ApplicationInterview[]
   tasks: ApplicationTask[]
