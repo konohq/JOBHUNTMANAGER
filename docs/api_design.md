@@ -30,7 +30,7 @@ http://localhost:3000/api/v1
 React:
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api/v1
+VITE_API_BASE_URL=http://localhost:3000
 ```
 
 ### 2.2 リクエストヘッダー
@@ -203,6 +203,26 @@ high
 ```
 
 `user_id` は許可パラメータに含めない。
+
+### 2.10 認証APIのレート制限
+
+総当たり攻撃と大量登録を抑止するため、Rack::Attackを使用して同一IPからの認証リクエストを制限する。
+
+| 対象 | 上限 |
+| --- | --- |
+| `POST /api/v1/auth/sign_in` | 1分あたり5回 |
+| `POST /api/v1/auth` | 1時間あたり3回 |
+
+上限超過時は`429 Too Many Requests`を返し、`Retry-After`ヘッダーへ再試行までの秒数を設定する。
+
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "リクエスト回数が上限を超えました。時間をおいて再度お試しください"
+  }
+}
+```
 
 ---
 
@@ -1405,9 +1425,10 @@ TaskとNoteも同じ方式とする。各コントローラーで `before_action
 | `401 Unauthorized` | JWTなし、無効、期限切れ、ログイン失敗 |
 | `404 Not Found` | 対象なし、他ユーザー所有の対象 |
 | `422 Unprocessable Entity` | バリデーションエラー、子データによる削除拒否 |
+| `429 Too Many Requests` | 認証APIのレート制限超過 |
 | `500 Internal Server Error` | 想定外のサーバーエラー |
 
-`409 Conflict` と `429 Too Many Requests` はMVPでは使用しない。
+`409 Conflict` はMVPでは使用しない。
 
 ### エラーコード
 
@@ -1419,6 +1440,7 @@ TaskとNoteも同じ方式とする。各コントローラーで `before_action
 | `not_found` | 404 | 対象なし |
 | `validation_error` | 422 | 入力値不正 |
 | `dependent_exists` | 422 | 子データがあるため削除拒否 |
+| `rate_limit_exceeded` | 429 | 認証APIのレート制限超過 |
 | `internal_server_error` | 500 | サーバー内部エラー |
 
 ---
@@ -1467,7 +1489,6 @@ before_action :authenticate_user!
 - カンバン表示順一括更新
 - 次回面接・次回タスクを含むカンバンレスポンス
 - `409 Conflict` を使用する競合制御
-- `429 Too Many Requests` を使用するレート制限
 - 統計・ダッシュボード
 - ファイル、通知、カレンダー、タグ、CSV関連API
 

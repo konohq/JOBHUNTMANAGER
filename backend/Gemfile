@@ -6,6 +6,8 @@ gem "rails", "~> 8.0.4"
 gem "pg", "~> 1.1"
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS)
 gem "rack-cors"
+# Protect public endpoints from abusive request rates
+gem "rack-attack", "~> 6.8"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
