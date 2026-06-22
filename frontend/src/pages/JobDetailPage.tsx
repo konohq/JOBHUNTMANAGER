@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ApplicationCreatePanel } from '../features/applications/components/ApplicationCreatePanel'
+import { applicationStatusLabels } from '../features/applications/types'
 import { jobPostingsApi } from '../features/jobPostings/api/jobPostingsApi'
 import type { JobPosting } from '../features/jobPostings/types'
 import { getApiErrorMessage } from '../shared/api/apiError'
@@ -16,6 +18,7 @@ export function JobDetailPage() {
   const [deleteError, setDeleteError] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showApplicationForm, setShowApplicationForm] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -114,13 +117,31 @@ export function JobDetailPage() {
                   {jobPosting.title}
                 </h1>
                 {jobPosting.application && (
-                  <span className="mt-4 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-                    応募登録済み
-                  </span>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                      {applicationStatusLabels[jobPosting.application.status]}
+                    </span>
+                    <Link
+                      to={`/applications/${jobPosting.application.id}`}
+                      className="text-sm font-semibold text-indigo-600 hover:text-indigo-500"
+                    >
+                      応募詳細を見る →
+                    </Link>
+                  </div>
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
+                {!jobPosting.application && (
+                  <button
+                    type="button"
+                    onClick={() => setShowApplicationForm(true)}
+                    disabled={showApplicationForm}
+                    className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    応募する
+                  </button>
+                )}
                 <Link
                   to={`/jobs/${jobPosting.id}/edit`}
                   className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -139,6 +160,16 @@ export function JobDetailPage() {
                 </button>
               </div>
             </div>
+
+            {!jobPosting.application && showApplicationForm && (
+              <ApplicationCreatePanel
+                jobPostingId={jobPosting.id}
+                onCreated={(application) =>
+                  navigate(`/applications/${application.id}`)
+                }
+                onCancel={() => setShowApplicationForm(false)}
+              />
+            )}
 
             {deleteError && <InlineAlert message={deleteError} />}
 

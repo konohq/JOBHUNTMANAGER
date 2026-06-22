@@ -1,8 +1,9 @@
 import type { CompanySummary } from '../companies/types'
+import type { ApplicationStatus } from '../applications/types'
 
-export type ApplicationSummary = {
+export type JobPostingApplicationSummary = {
   id: number
-  status: string
+  status: ApplicationStatus
   applied_on: string
 }
 
@@ -21,7 +22,7 @@ export type JobPostingSummary = {
 export type JobPosting = Omit<JobPostingSummary, 'application_id'> & {
   source_url: string | null
   description: string | null
-  application: ApplicationSummary | null
+  application: JobPostingApplicationSummary | null
 }
 
 export type JobPostingInput = {

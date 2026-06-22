@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { ApplicationDetailPage } from '../pages/ApplicationDetailPage'
 import { JobDetailPage } from '../pages/JobDetailPage'
 import { JobEditPage } from '../pages/JobEditPage'
 import { JobNewPage } from '../pages/JobNewPage'
@@ -29,6 +30,10 @@ export function AppRouter() {
           <Route path="/jobs/new" element={<JobNewPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/jobs/:id/edit" element={<JobEditPage />} />
+          <Route
+            path="/applications/:id"
+            element={<ApplicationDetailPage />}
+          />
         </Route>
       </Route>
 
