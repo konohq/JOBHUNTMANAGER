@@ -1,11 +1,12 @@
 class KanbanApplicationCreator
   include ActiveModel::Model
 
-  attr_accessor :company_name, :application_deadline
+  attr_accessor :company_name, :applied_on
   attr_reader :application
 
   validates :company_name, presence: true, length: { maximum: 255 }
-  validate :application_deadline_must_be_iso8601
+  validates :applied_on, presence: true
+  validate :applied_on_must_be_iso8601
 
   def initialize(user:, attributes:)
     @user = user
@@ -55,8 +56,7 @@ class KanbanApplicationCreator
   def create_job_posting!(company)
     user.job_postings.create!(
       company: company,
-      title: company_name,
-      application_deadline: parsed_application_deadline
+      title: company_name
     )
   end
 
@@ -64,22 +64,22 @@ class KanbanApplicationCreator
     user.applications.create!(
       job_posting: job_posting,
       status: :applied,
-      applied_on: Date.current
+      applied_on: parsed_applied_on
     )
   end
 
-  def application_deadline_must_be_iso8601
-    return if application_deadline.blank?
+  def applied_on_must_be_iso8601
+    return if applied_on.blank?
 
-    parsed_application_deadline
+    parsed_applied_on
   rescue Date::Error
-    errors.add(:application_deadline, "はYYYY-MM-DD形式で入力してください")
+    errors.add(:applied_on, "はYYYY-MM-DD形式で入力してください")
   end
 
-  def parsed_application_deadline
-    return if application_deadline.blank?
+  def parsed_applied_on
+    return if applied_on.blank?
 
-    Date.iso8601(application_deadline.to_s)
+    Date.iso8601(applied_on.to_s)
   end
 
   def copy_errors(record)

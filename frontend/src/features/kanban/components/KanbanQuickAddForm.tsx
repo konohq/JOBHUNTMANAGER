@@ -4,6 +4,7 @@ import {
   getApiValidationErrors,
 } from '../../../shared/api/apiError'
 import { InlineAlert } from '../../../shared/components/InlineAlert'
+import { getTodayDateValue } from '../../../shared/utils/date'
 import { kanbanApi } from '../api/kanbanApi'
 import type { KanbanCardData } from '../types'
 
@@ -17,7 +18,7 @@ export function KanbanQuickAddForm({
   onCancel,
 }: KanbanQuickAddFormProps) {
   const [companyName, setCompanyName] = useState('')
-  const [applicationDeadline, setApplicationDeadline] = useState('')
+  const [appliedOn, setAppliedOn] = useState(getTodayDateValue)
   const [errorMessage, setErrorMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,7 +39,7 @@ export function KanbanQuickAddForm({
     try {
       const card = await kanbanApi.createApplication({
         company_name: trimmedCompanyName,
-        application_deadline: applicationDeadline,
+        applied_on: appliedOn,
       })
       onCreated(card)
     } catch (error) {
@@ -50,8 +51,7 @@ export function KanbanQuickAddForm({
   }
 
   const companyNameError = fieldErrors.company_name?.join('、')
-  const applicationDeadlineError =
-    fieldErrors.application_deadline?.join('、')
+  const appliedOnError = fieldErrors.applied_on?.join('、')
 
   return (
     <form
@@ -106,31 +106,32 @@ export function KanbanQuickAddForm({
 
       <label className="mt-3 block">
         <span className="text-xs font-medium text-slate-600">
-          応募期限（任意）
+          応募日 <span className="text-red-500">*</span>
         </span>
         <input
           type="date"
-          value={applicationDeadline}
+          required
+          value={appliedOn}
           onChange={(event) => {
-            setApplicationDeadline(event.target.value)
+            setAppliedOn(event.target.value)
             setErrorMessage('')
             setFieldErrors((current) => ({
               ...current,
-              application_deadline: [],
+              applied_on: [],
             }))
           }}
           className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
         />
-        {applicationDeadlineError && (
+        {appliedOnError && (
           <span role="alert" className="mt-1.5 block text-xs text-red-600">
-            {applicationDeadlineError}
+            {appliedOnError}
           </span>
         )}
       </label>
 
       <button
         type="submit"
-        disabled={isSubmitting || companyName.trim() === ''}
+        disabled={isSubmitting || companyName.trim() === '' || appliedOn === ''}
         className="mt-3 w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? '追加中...' : '応募済みに追加'}

@@ -458,6 +458,7 @@ end
 - 同一会社名への応募制約は簡易応募登録サービスで検証する
 - 通常の求人APIを利用した応募では、既存の `applications.job_posting_id` ユニーク制約を使用する
 - 簡易応募登録のJobPostingは内部レコードとして `title` に会社名を保存する
+- 簡易応募登録で入力された応募日は `applications.applied_on` に保存する
 
 ---
 

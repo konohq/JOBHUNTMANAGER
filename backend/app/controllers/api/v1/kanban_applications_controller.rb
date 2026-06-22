@@ -23,7 +23,7 @@ module Api
       def kanban_application_params
         params.require(:application).permit(
           :company_name,
-          :application_deadline
+          :applied_on
         )
       end
     end

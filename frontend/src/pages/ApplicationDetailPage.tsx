@@ -11,7 +11,7 @@ import {
 } from '../shared/api/apiError'
 import { ContentLoading } from '../shared/components/ContentLoading'
 import { InlineAlert } from '../shared/components/InlineAlert'
-import { formatDate, formatDateTime } from '../shared/utils/date'
+import { formatDateTime } from '../shared/utils/date'
 
 export function ApplicationDetailPage() {
   const { id } = useParams()
@@ -265,18 +265,12 @@ export function ApplicationDetailPage() {
               <aside className="space-y-6">
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="text-lg font-semibold text-slate-900">
-                    求人情報
+                    企業情報
                   </h2>
                   <dl className="mt-5 space-y-4">
                     <DetailItem
                       label="企業"
                       value={application.job_posting.company.name}
-                    />
-                    <DetailItem
-                      label="応募期限"
-                      value={formatDate(
-                        application.job_posting.application_deadline,
-                      )}
                     />
                   </dl>
                   {application.job_posting.source_url && (

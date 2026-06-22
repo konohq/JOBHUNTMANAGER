@@ -43,7 +43,7 @@ describe('kanbanApi.createApplication', () => {
     await expect(
       kanbanApi.createApplication({
         company_name: '株式会社サンプル',
-        application_deadline: '2026-07-31',
+        applied_on: '2026-06-22',
       }),
     ).resolves.toEqual(card)
 
@@ -53,7 +53,7 @@ describe('kanbanApi.createApplication', () => {
       {
         application: {
           company_name: '株式会社サンプル',
-          application_deadline: '2026-07-31',
+          applied_on: '2026-06-22',
         },
       },
     )

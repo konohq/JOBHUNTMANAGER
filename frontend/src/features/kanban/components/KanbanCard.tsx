@@ -37,9 +37,9 @@ export function KanbanCard({
         </h3>
 
         <div className="mt-4 flex items-center justify-between gap-3 text-xs">
-          <span className="text-slate-500">応募期限</span>
+          <span className="text-slate-500">応募日</span>
           <span className="font-medium text-slate-700">
-            {formatDate(card.job_posting.application_deadline)}
+            {formatDate(card.applied_on)}
           </span>
         </div>
       </Link>

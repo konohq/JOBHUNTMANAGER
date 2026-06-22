@@ -13,7 +13,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
          params: {
            application: {
              company_name: "株式会社サンプル",
-             application_deadline: "2026-07-31"
+             applied_on: "2026-06-22"
            }
          },
          as: :json
@@ -140,7 +140,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
            params: {
              application: {
                company_name: "  株式会社クイック  ",
-               application_deadline: "2026-07-31"
+               applied_on: "2026-06-20"
              }
            },
            headers: authorization_headers(users(:one)),
@@ -152,15 +152,13 @@ class KanbanTest < ActionDispatch::IntegrationTest
     application = users(:one).applications.order(:id).last
     assert_equal "株式会社クイック", application.job_posting.company.name
     assert_equal "株式会社クイック", application.job_posting.title
-    assert_equal Date.new(2026, 7, 31),
-                 application.job_posting.application_deadline
+    assert_nil application.job_posting.application_deadline
     assert_equal "applied", application.status
-    assert_equal Date.current, application.applied_on
+    assert_equal Date.new(2026, 6, 20), application.applied_on
 
     card = response.parsed_body.fetch("data")
     assert_equal application.id, card.fetch("id")
-    assert_equal "2026-07-31",
-                 card.dig("job_posting", "application_deadline")
+    assert_equal "2026-06-20", card.fetch("applied_on")
   end
 
   test "quick create reuses an existing company with the same name" do
@@ -178,7 +176,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
              params: {
                application: {
                  company_name: "株式会社再利用",
-                 application_deadline: ""
+                 applied_on: "2026-06-21"
                }
              },
              headers: authorization_headers(users(:one)),
@@ -205,7 +203,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
            params: {
              application: {
                company_name: "株式会社ユーザー別",
-               application_deadline: ""
+               applied_on: "2026-06-21"
              }
            },
            headers: authorization_headers(users(:one)),
@@ -237,7 +235,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
            params: {
              application: {
                company_name: "  株式会社重複  ",
-               application_deadline: "2026-07-31"
+               applied_on: "2026-06-21"
              }
            },
            headers: authorization_headers(users(:one)),
@@ -267,7 +265,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
              params: {
                application: {
                  company_name: "株式会社求人失敗",
-                 application_deadline: "2026-07-31"
+                 applied_on: "2026-06-21"
                }
              },
              headers: authorization_headers(users(:one)),
@@ -294,7 +292,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
              params: {
                application: {
                  company_name: "株式会社応募失敗",
-                 application_deadline: "2026-07-31"
+                 applied_on: "2026-06-21"
                }
              },
              headers: authorization_headers(users(:one)),
@@ -312,7 +310,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
          params: {
            application: {
              company_name: " ",
-             application_deadline: "invalid-date"
+             applied_on: "invalid-date"
            }
          },
          headers: authorization_headers(users(:one)),
@@ -321,7 +319,7 @@ class KanbanTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     details = response.parsed_body.dig("error", "details")
     assert_predicate details["company_name"], :present?
-    assert_predicate details["application_deadline"], :present?
+    assert_predicate details["applied_on"], :present?
   end
 
   test "update changes only status and moves card to the top of destination column" do

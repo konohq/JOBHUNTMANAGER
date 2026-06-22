@@ -34,7 +34,7 @@ export type KanbanData = Record<ApplicationStatus, KanbanCardData[]>
 
 export type CreateKanbanApplicationInput = {
   company_name: string
-  application_deadline: string
+  applied_on: string
 }
 
 export const emptyKanbanData = (): KanbanData => ({

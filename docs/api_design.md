@@ -248,7 +248,7 @@ high
 | PATCH | `/api/v1/applications/:id` | 必要 | 応募日の更新 |
 | DELETE | `/api/v1/applications/:id` | 必要 | 応募削除 |
 | GET | `/api/v1/kanban` | 必要 | カンバン取得 |
-| POST | `/api/v1/kanban/applications` | 必要 | 会社名と応募期限による簡易応募登録 |
+| POST | `/api/v1/kanban/applications` | 必要 | 会社名と応募日による簡易応募登録 |
 | PATCH | `/api/v1/applications/:application_id/status` | 必要 | カンバンのステータス変更 |
 
 同一列内の手動並び替えAPIはMVPでは作成しない。
@@ -815,7 +815,7 @@ Authorization: Bearer <JWT>
 {
   "application": {
     "company_name": "  株式会社サンプル  ",
-    "application_deadline": "2026-07-31"
+    "applied_on": "2026-06-22"
   }
 }
 ```
@@ -835,7 +835,7 @@ Authorization: Bearer <JWT>
     "job_posting": {
       "id": 10,
       "title": "株式会社サンプル",
-      "application_deadline": "2026-07-31"
+      "application_deadline": null
     },
     "updated_at": "2026-06-22T06:20:00Z"
   }
@@ -844,13 +844,13 @@ Authorization: Bearer <JWT>
 
 - 認証済みの `current_user` のデータとして作成する
 - `company_name` は前後空白を除去し、必須・最大255文字とする
-- `application_deadline` は任意で、指定時は `YYYY-MM-DD` 形式とする
+- `applied_on` は必須で、`YYYY-MM-DD` 形式とする
 - 同じユーザー内に同名Companyが存在する場合は再利用する
 - 同じユーザー内に同一会社名のApplicationが存在する場合は作成せず、`company_name` のバリデーションエラーとして `422 Unprocessable Entity` を返す
 - Company、JobPosting、Applicationは `ApplicationRecord.transaction` 内で作成する
 - 同一ユーザーの同時リクエストはユーザー行をロックして直列化する
-- JobPostingは内部データとして、`title` に会社名、`application_deadline` に入力値を保存する
-- Applicationは `status: applied`、`applied_on: Date.current` で作成する
+- JobPostingは内部データとして、`title` に会社名を保存する
+- Applicationは `status: applied`、`applied_on` に入力された応募日を保存する
 - 途中で失敗した場合はトランザクションをロールバックし、CompanyやJobPostingだけを残さない
 - ReactはこのAPIだけを呼び、企業API・求人API・通常の応募登録APIを個別に呼ばない
 
@@ -910,8 +910,8 @@ Authorization: Bearer <JWT>
 - `applied`、`document_screening`、`interview_scheduled`、`offered`、`rejected`の5列を必ず返す
 - 応募が存在しない列は空配列を返す
 - 各列は `updated_at DESC`、同時刻の場合は `id DESC` で返す
-- カンバンカードには会社、内部求人、応募日、応募期限、ステータスを含める
-- MVP画面では会社名、応募期限、ステータスを表示する
+- カンバンカードには会社、内部求人、応募日、ステータスを含める
+- MVP画面では会社名、応募日、ステータスを表示する
 - `next_interview`と`next_task`はMVPでは含めない
 
 ### 7.8 カンバンのステータス変更
@@ -1453,7 +1453,7 @@ end
 - カンバン移動は楽観的更新を行い、失敗時に元の列へ戻す
 - カンバンの＋ボタンは `POST /api/v1/kanban/applications` のみを呼ぶ
 - 簡易応募登録成功時はレスポンスのカードを「応募済み」列へ追加する
-- 簡易応募登録失敗時は `company_name` と `application_deadline` のエラーを対応する入力欄へ表示する
+- 簡易応募登録失敗時は `company_name` と `applied_on` のエラーを対応する入力欄へ表示する
 - 応募削除前に面接、タスク、メモも削除されることを表示する
 - 求人削除が `dependent_exists` で失敗した場合は応募削除が必要であることを表示する
 - enumはTypeScriptのunion型で定義する
