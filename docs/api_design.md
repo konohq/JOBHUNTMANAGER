@@ -269,6 +269,7 @@ high
 | HTTP | エンドポイント | 認証 | 用途 |
 | --- | --- | --- | --- |
 | GET | `/api/v1/tasks` | 必要 | タスク一覧 |
+| GET | `/api/v1/applications/:application_id/tasks` | 必要 | 応募別タスク一覧 |
 | POST | `/api/v1/applications/:application_id/tasks` | 必要 | タスク登録 |
 | PATCH | `/api/v1/tasks/:id` | 必要 | タスク更新・完了状態変更 |
 | DELETE | `/api/v1/tasks/:id` | 必要 | タスク削除 |
@@ -1123,7 +1124,40 @@ Authorization: Bearer <JWT>
 
 `overdue` は `completed_at` と `due_at` からAPI側で算出する。
 
-### 9.2 タスク登録
+### 9.2 応募別タスク一覧
+
+```http
+GET /api/v1/applications/20/tasks
+Authorization: Bearer <JWT>
+```
+
+成功: `200 OK`
+
+```json
+{
+  "data": [
+    {
+      "id": 40,
+      "application_id": 20,
+      "title": "履歴書を送付",
+      "description": "採用担当者宛てに送付する",
+      "due_at": "2026-06-21T14:59:00Z",
+      "priority": "high",
+      "completed_at": null,
+      "overdue": false,
+      "created_at": "2026-06-20T01:00:00Z",
+      "updated_at": "2026-06-20T01:00:00Z"
+    }
+  ]
+}
+```
+
+- `current_user.applications`から応募を取得する
+- 指定応募に紐づくタスクだけを返す
+- 他ユーザーの応募IDは`404 Not Found`とする
+- 応募詳細画面のタスク管理UIではこのAPIを使用する
+
+### 9.3 タスク登録
 
 ```http
 POST /api/v1/applications/20/tasks
@@ -1160,7 +1194,7 @@ Authorization: Bearer <JWT>
 }
 ```
 
-### 9.3 タスク更新・完了
+### 9.4 タスク更新・完了
 
 ```http
 PATCH /api/v1/tasks/40
@@ -1197,7 +1231,7 @@ Authorization: Bearer <JWT>
 - `true`: `completed_at = Time.current`
 - `false`: `completed_at = nil`
 
-### 9.4 タスク削除
+### 9.5 タスク削除
 
 ```http
 DELETE /api/v1/tasks/40
@@ -1423,7 +1457,7 @@ Rails.application.routes.draw do
 
       resources :applications do
         resources :interviews, only: :create
-        resources :tasks, only: :create
+        resources :tasks, only: %i[index create]
         resources :notes, only: %i[index create]
       end
 

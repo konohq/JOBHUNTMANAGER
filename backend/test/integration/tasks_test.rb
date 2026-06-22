@@ -7,6 +7,7 @@ class TasksTest < ActionDispatch::IntegrationTest
 
     requests = [
       -> { get "/api/v1/tasks" },
+      -> { get "/api/v1/applications/#{application.id}/tasks" },
       lambda {
         post "/api/v1/applications/#{application.id}/tasks",
              params: { task: { title: "未認証タスク" } },
@@ -25,6 +26,42 @@ class TasksTest < ActionDispatch::IntegrationTest
       assert_response :unauthorized
       assert_equal "unauthorized", response.parsed_body.dig("error", "code")
     end
+  end
+
+  test "application index returns only tasks for owned application" do
+    application = create_application(users(:one), title: "対象求人")
+    earlier_task = create_task(
+      application,
+      title: "先のタスク",
+      due_at: 1.day.from_now
+    )
+    later_task = create_task(
+      application,
+      title: "後のタスク",
+      due_at: 2.days.from_now
+    )
+    other_application = create_application(users(:one), title: "別求人")
+    create_task(other_application, title: "別応募のタスク")
+
+    get "/api/v1/applications/#{application.id}/tasks",
+        headers: authorization_headers(users(:one))
+
+    assert_response :ok
+
+    tasks = response.parsed_body.fetch("data")
+    assert_equal [ earlier_task.id, later_task.id ], tasks.pluck("id")
+    assert tasks.all? { |task| task["application_id"] == application.id }
+    assert tasks.none? { |task| task.key?("application") }
+  end
+
+  test "application index returns not found for another user application" do
+    application = create_application(users(:two))
+
+    get "/api/v1/applications/#{application.id}/tasks",
+        headers: authorization_headers(users(:one))
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
   end
 
   test "index returns only current user tasks with application details" do

@@ -26,3 +26,11 @@ button,
 input {
   font: inherit;
 }
+
+.kanban-board-scroll {
+  scrollbar-width: none;
+}
+
+.kanban-board-scroll::-webkit-scrollbar {
+  display: none;
+}

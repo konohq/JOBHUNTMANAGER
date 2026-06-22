@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { applicationsApi } from '../features/applications/api/applicationsApi'
 import {
   applicationStatusLabels,
   type ApplicationDetail,
 } from '../features/applications/types'
+import { TaskSection } from '../features/tasks/components/TaskSection'
 import {
   getApiErrorMessage,
   getApiValidationErrors,
@@ -17,6 +18,7 @@ export function ApplicationDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [application, setApplication] = useState<ApplicationDetail | null>(null)
+  const [taskCount, setTaskCount] = useState(0)
   const [appliedOn, setAppliedOn] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -41,6 +43,7 @@ export function ApplicationDetailPage() {
         if (active) {
           setApplication(loadedApplication)
           setAppliedOn(loadedApplication.applied_on)
+          setTaskCount(loadedApplication.tasks.length)
           setErrorMessage('')
         }
       } catch (error) {
@@ -65,6 +68,10 @@ export function ApplicationDetailPage() {
     setErrorMessage('')
     setReloadKey((current) => current + 1)
   }
+
+  const handleTaskCountChange = useCallback((count: number) => {
+    setTaskCount(count)
+  }, [])
 
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -292,12 +299,17 @@ export function ApplicationDetailPage() {
                 label="面接"
                 count={application.interviews.length}
               />
-              <RelatedResource label="タスク" count={application.tasks.length} />
+              <RelatedResource label="タスク" count={taskCount} />
               <RelatedResource label="メモ" count={application.notes.length} />
             </section>
 
+            <TaskSection
+              applicationId={application.id}
+              onTaskCountChange={handleTaskCountChange}
+            />
+
             <p className="text-sm text-slate-500">
-              面接・タスク・メモの管理UIは次の実装段階で追加します。
+              面接・メモの管理UIは次の実装段階で追加します。
             </p>
           </div>
         )}

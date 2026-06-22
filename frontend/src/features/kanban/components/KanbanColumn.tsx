@@ -50,7 +50,7 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   return (
     <section
-      className={`flex w-72 shrink-0 flex-col rounded-2xl border border-slate-200 ${columnBackgroundClasses[status]}`}
+      className={`flex w-72 shrink-0 flex-col rounded-2xl border border-slate-200 2xl:w-auto 2xl:min-w-0 2xl:flex-1 ${columnBackgroundClasses[status]}`}
       aria-labelledby={`kanban-column-${status}`}
     >
       <header className="p-4">

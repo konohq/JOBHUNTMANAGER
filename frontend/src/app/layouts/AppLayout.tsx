@@ -24,7 +24,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1920px] items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-4 sm:gap-8">
             <NavLink to="/kanban" className="font-bold tracking-wide text-slate-900">
               <span className="hidden sm:inline">JOBHUNTMANAGER</span>
@@ -71,7 +71,7 @@ export function AppLayout() {
         )}
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-[1920px] px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />
       </main>
     </div>

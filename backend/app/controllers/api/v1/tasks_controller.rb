@@ -1,20 +1,20 @@
 module Api
   module V1
     class TasksController < BaseController
-      before_action :set_application, only: :create
+      before_action :set_application, only: %i[index create]
       before_action :set_task, only: %i[update destroy]
 
       def index
-        tasks = Task
-          .joins(:application)
-          .where(applications: { user_id: current_user.id })
-          .includes(application: { job_posting: :company })
-          .order(:completed_at, :due_at, :id)
+        tasks = if @application
+          @application.tasks.order(:completed_at, :due_at, :id)
+        else
+          current_user_tasks
+        end
 
         render json: {
           data: tasks.map do |task|
             TaskSerializer
-              .new(task, include_application: true)
+              .new(task, include_application: @application.nil?)
               .serializable_hash
           end
         }, status: :ok
@@ -57,7 +57,17 @@ module Api
       private
 
       def set_application
+        return unless params[:application_id]
+
         @application = current_user.applications.find(params[:application_id])
+      end
+
+      def current_user_tasks
+        Task
+          .joins(:application)
+          .where(applications: { user_id: current_user.id })
+          .includes(application: { job_posting: :company })
+          .order(:completed_at, :due_at, :id)
       end
 
       def set_task
