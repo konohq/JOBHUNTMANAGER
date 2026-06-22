@@ -5,6 +5,7 @@ import {
   applicationStatusLabels,
   type ApplicationDetail,
 } from '../features/applications/types'
+import { InterviewSection } from '../features/interviews/components/InterviewSection'
 import { TaskSection } from '../features/tasks/components/TaskSection'
 import {
   getApiErrorMessage,
@@ -18,6 +19,7 @@ export function ApplicationDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [application, setApplication] = useState<ApplicationDetail | null>(null)
+  const [interviewCount, setInterviewCount] = useState(0)
   const [taskCount, setTaskCount] = useState(0)
   const [appliedOn, setAppliedOn] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -43,6 +45,7 @@ export function ApplicationDetailPage() {
         if (active) {
           setApplication(loadedApplication)
           setAppliedOn(loadedApplication.applied_on)
+          setInterviewCount(loadedApplication.interviews.length)
           setTaskCount(loadedApplication.tasks.length)
           setErrorMessage('')
         }
@@ -71,6 +74,10 @@ export function ApplicationDetailPage() {
 
   const handleTaskCountChange = useCallback((count: number) => {
     setTaskCount(count)
+  }, [])
+
+  const handleInterviewCountChange = useCallback((count: number) => {
+    setInterviewCount(count)
   }, [])
 
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
@@ -297,11 +304,16 @@ export function ApplicationDetailPage() {
             <section className="grid gap-4 sm:grid-cols-3">
               <RelatedResource
                 label="面接"
-                count={application.interviews.length}
+                count={interviewCount}
               />
               <RelatedResource label="タスク" count={taskCount} />
               <RelatedResource label="メモ" count={application.notes.length} />
             </section>
+
+            <InterviewSection
+              applicationId={application.id}
+              onInterviewCountChange={handleInterviewCountChange}
+            />
 
             <TaskSection
               applicationId={application.id}
@@ -309,7 +321,7 @@ export function ApplicationDetailPage() {
             />
 
             <p className="text-sm text-slate-500">
-              面接・メモの管理UIは次の実装段階で追加します。
+              メモの管理UIは次の実装段階で追加します。
             </p>
           </div>
         )}

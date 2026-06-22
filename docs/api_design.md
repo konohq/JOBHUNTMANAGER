@@ -258,6 +258,7 @@ high
 | HTTP | エンドポイント | 認証 | 用途 |
 | --- | --- | --- | --- |
 | GET | `/api/v1/interviews` | 必要 | 面接予定一覧 |
+| GET | `/api/v1/applications/:application_id/interviews` | 必要 | 応募別面接一覧 |
 | POST | `/api/v1/applications/:application_id/interviews` | 必要 | 面接登録 |
 | PATCH | `/api/v1/interviews/:id` | 必要 | 面接更新 |
 | DELETE | `/api/v1/interviews/:id` | 必要 | 面接削除 |
@@ -1003,7 +1004,42 @@ Authorization: Bearer <JWT>
 
 検索・ページネーションは行わず、`scheduled_at ASC` で返す。必要な表示切り替えはReact側で行う。
 
-### 8.2 面接登録
+### 8.2 応募別面接一覧
+
+```http
+GET /api/v1/applications/20/interviews
+Authorization: Bearer <JWT>
+```
+
+成功: `200 OK`
+
+```json
+{
+  "data": [
+    {
+      "id": 30,
+      "application_id": 20,
+      "interview_type": "first",
+      "scheduled_at": "2026-06-25T04:00:00Z",
+      "location": null,
+      "meeting_url": "https://meet.example.com/abc",
+      "status": "scheduled",
+      "result": "pending",
+      "interviewer": "採用担当者",
+      "details": "ポートフォリオを準備",
+      "created_at": "2026-06-20T01:00:00Z",
+      "updated_at": "2026-06-20T01:00:00Z"
+    }
+  ]
+}
+```
+
+- `current_user.applications`から応募を取得する
+- 指定応募に紐づく面接だけを`scheduled_at ASC`で返す
+- 他ユーザーの応募IDは`404 Not Found`とする
+- 応募詳細画面の面接管理UIではこのAPIを使用する
+
+### 8.3 面接登録
 
 ```http
 POST /api/v1/applications/20/interviews
@@ -1048,7 +1084,7 @@ Authorization: Bearer <JWT>
 
 面接登録時にApplicationのステータスは変更しない。
 
-### 8.3 面接更新
+### 8.4 面接更新
 
 ```http
 PATCH /api/v1/interviews/30
@@ -1071,7 +1107,7 @@ Authorization: Bearer <JWT>
 
 更新後の面接を `data` に返す。Applicationのステータスは変更しない。
 
-### 8.4 面接削除
+### 8.5 面接削除
 
 ```http
 DELETE /api/v1/interviews/30
@@ -1456,7 +1492,7 @@ Rails.application.routes.draw do
       resources :job_postings
 
       resources :applications do
-        resources :interviews, only: :create
+        resources :interviews, only: %i[index create]
         resources :tasks, only: %i[index create]
         resources :notes, only: %i[index create]
       end

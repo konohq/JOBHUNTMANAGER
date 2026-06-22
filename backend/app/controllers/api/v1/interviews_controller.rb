@@ -1,20 +1,20 @@
 module Api
   module V1
     class InterviewsController < BaseController
-      before_action :set_application, only: :create
+      before_action :set_application, only: %i[index create]
       before_action :set_interview, only: %i[update destroy]
 
       def index
-        interviews = Interview
-          .joins(:application)
-          .where(applications: { user_id: current_user.id })
-          .includes(application: { job_posting: :company })
-          .order(:scheduled_at, :id)
+        interviews = if @application
+          @application.interviews.order(:scheduled_at, :id)
+        else
+          current_user_interviews
+        end
 
         render json: {
           data: interviews.map do |interview|
             InterviewSerializer
-              .new(interview, include_application: true)
+              .new(interview, include_application: @application.nil?)
               .serializable_hash
           end
         }, status: :ok
@@ -55,7 +55,17 @@ module Api
       private
 
       def set_application
+        return unless params[:application_id]
+
         @application = current_user.applications.find(params[:application_id])
+      end
+
+      def current_user_interviews
+        Interview
+          .joins(:application)
+          .where(applications: { user_id: current_user.id })
+          .includes(application: { job_posting: :company })
+          .order(:scheduled_at, :id)
       end
 
       def set_interview

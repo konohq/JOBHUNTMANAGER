@@ -19,7 +19,7 @@ Rails.application.routes.draw do
       resources :companies, only: %i[index create]
       resources :job_postings
       resources :applications do
-        resources :interviews, only: :create
+        resources :interviews, only: %i[index create]
         resources :tasks, only: %i[index create]
         resources :notes, only: %i[index create]
       end

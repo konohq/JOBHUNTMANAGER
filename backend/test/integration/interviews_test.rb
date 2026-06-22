@@ -7,6 +7,7 @@ class InterviewsTest < ActionDispatch::IntegrationTest
 
     requests = [
       -> { get "/api/v1/interviews" },
+      -> { get "/api/v1/applications/#{application.id}/interviews" },
       lambda {
         post "/api/v1/applications/#{application.id}/interviews",
              params: {
@@ -29,6 +30,45 @@ class InterviewsTest < ActionDispatch::IntegrationTest
       assert_response :unauthorized
       assert_equal "unauthorized", response.parsed_body.dig("error", "code")
     end
+  end
+
+  test "application index returns only interviews for owned application" do
+    application = create_application(users(:one), title: "対象求人")
+    earlier_interview = create_interview(
+      application,
+      scheduled_at: 1.week.from_now,
+      interview_type: :first
+    )
+    later_interview = create_interview(
+      application,
+      scheduled_at: 2.weeks.from_now,
+      interview_type: :second
+    )
+    other_application = create_application(users(:one), title: "別求人")
+    create_interview(other_application, scheduled_at: 3.days.from_now)
+
+    get "/api/v1/applications/#{application.id}/interviews",
+        headers: authorization_headers(users(:one))
+
+    assert_response :ok
+
+    interviews = response.parsed_body.fetch("data")
+    assert_equal [ earlier_interview.id, later_interview.id ],
+                 interviews.pluck("id")
+    assert interviews.all? do |interview|
+      interview["application_id"] == application.id
+    end
+    assert interviews.none? { |interview| interview.key?("application") }
+  end
+
+  test "application index returns not found for another user application" do
+    application = create_application(users(:two))
+
+    get "/api/v1/applications/#{application.id}/interviews",
+        headers: authorization_headers(users(:one))
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
   end
 
   test "index returns only current user interviews ordered by scheduled time" do
