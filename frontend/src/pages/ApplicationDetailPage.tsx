@@ -6,6 +6,7 @@ import {
   type ApplicationDetail,
 } from '../features/applications/types'
 import { InterviewSection } from '../features/interviews/components/InterviewSection'
+import { NoteSection } from '../features/notes/components/NoteSection'
 import { TaskSection } from '../features/tasks/components/TaskSection'
 import {
   getApiErrorMessage,
@@ -21,6 +22,7 @@ export function ApplicationDetailPage() {
   const [application, setApplication] = useState<ApplicationDetail | null>(null)
   const [interviewCount, setInterviewCount] = useState(0)
   const [taskCount, setTaskCount] = useState(0)
+  const [noteCount, setNoteCount] = useState(0)
   const [appliedOn, setAppliedOn] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -47,6 +49,7 @@ export function ApplicationDetailPage() {
           setAppliedOn(loadedApplication.applied_on)
           setInterviewCount(loadedApplication.interviews.length)
           setTaskCount(loadedApplication.tasks.length)
+          setNoteCount(loadedApplication.notes.length)
           setErrorMessage('')
         }
       } catch (error) {
@@ -78,6 +81,10 @@ export function ApplicationDetailPage() {
 
   const handleInterviewCountChange = useCallback((count: number) => {
     setInterviewCount(count)
+  }, [])
+
+  const handleNoteCountChange = useCallback((count: number) => {
+    setNoteCount(count)
   }, [])
 
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
@@ -307,7 +314,7 @@ export function ApplicationDetailPage() {
                 count={interviewCount}
               />
               <RelatedResource label="タスク" count={taskCount} />
-              <RelatedResource label="メモ" count={application.notes.length} />
+              <RelatedResource label="メモ" count={noteCount} />
             </section>
 
             <InterviewSection
@@ -320,9 +327,10 @@ export function ApplicationDetailPage() {
               onTaskCountChange={handleTaskCountChange}
             />
 
-            <p className="text-sm text-slate-500">
-              メモの管理UIは次の実装段階で追加します。
-            </p>
+            <NoteSection
+              applicationId={application.id}
+              onNoteCountChange={handleNoteCountChange}
+            />
           </div>
         )}
       </div>
