@@ -21,3 +21,13 @@ export const getApiErrorMessage = (error: unknown): string => {
 
   return error.response.data?.error?.message ?? DEFAULT_ERROR_MESSAGE
 }
+
+export const getApiValidationErrors = (
+  error: unknown,
+): Record<string, string[]> => {
+  if (!axios.isAxiosError<ApiErrorBody>(error)) {
+    return {}
+  }
+
+  return error.response?.data?.error?.details ?? {}
+}
