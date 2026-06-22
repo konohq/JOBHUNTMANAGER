@@ -72,7 +72,7 @@ config.skip_session_storage = %i[http_auth params_auth]
 
 ```ruby
 config.jwt do |jwt|
-  jwt.secret = Rails.application.credentials.devise_jwt_secret_key!
+  jwt.secret = ENV.fetch("DEVISE_JWT_SECRET_KEY")
   jwt.dispatch_requests = [
     [ "POST", %r{^/api/v1/auth$} ],
     [ "POST", %r{^/api/v1/auth/sign_in$} ]
