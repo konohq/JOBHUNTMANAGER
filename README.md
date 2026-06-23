@@ -356,6 +356,19 @@ npm.cmd run dev
 | `DEVISE_JWT_SECRET_KEY` | ランダムな長い文字列 | JWTの署名 |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | CORSで許可するSPAのオリジン |
 
+### Backend: Render本番環境
+
+| 変数名 | 設定値 | 用途 |
+| --- | --- | --- |
+| `DATABASE_URL` | Render PostgreSQLのInternal Database URL | 本番データベース接続 |
+| `DEVISE_JWT_SECRET_KEY` | 本番用に生成した長いランダム文字列 | JWTの署名 |
+| `FRONTEND_ORIGIN` | デプロイしたReact SPAのオリジン | CORSで許可する接続元 |
+| `RAILS_MASTER_KEY` | `backend/config/master.key`の内容 | Rails Credentialsの復号 |
+| `RAILS_ENV` | `production` | Railsの実行環境 |
+| `RAILS_MAX_THREADS` | `3` | PumaとDB接続プールのスレッド数 |
+
+Render上では`DB_USERNAME`、`DB_PASSWORD`を個別に設定せず、`DATABASE_URL`へRender PostgreSQLのInternal Database URLを設定します。`DATABASE_URL`、JWT秘密鍵、`RAILS_MASTER_KEY`はGitHubへコミットしないでください。
+
 ### Frontend: `frontend/.env`
 
 | 変数名 | 例 | 用途 |
