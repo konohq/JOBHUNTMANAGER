@@ -24,10 +24,11 @@ export function KanbanCard({
   onStatusChange,
 }: KanbanCardProps) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-indigo-200 hover:shadow-md">
+    <article className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
       <Link
         to={`/applications/${card.id}`}
         className="block rounded-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+        aria-label={`${card.company.name}の応募詳細を開く`}
       >
         <p className="truncate text-xs font-semibold tracking-wide text-indigo-600">
           会社
@@ -80,6 +81,15 @@ export function KanbanCard({
           </p>
         )}
       </div>
+
+      <Link
+        to={`/applications/${card.id}`}
+        className="mt-4 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-100 hover:text-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+        aria-label={`${card.company.name}の応募詳細を見る`}
+      >
+        <span>📝 応募詳細を見る</span>
+        <span aria-hidden="true">→</span>
+      </Link>
     </article>
   )
 }
