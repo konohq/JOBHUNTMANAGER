@@ -94,7 +94,7 @@ export function KanbanQuickAddForm({
             }))
           }}
           maxLength={255}
-          placeholder="株式会社サンプル"
+          placeholder="株式会社 A"
           className="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
         />
         {companyNameError && (
